@@ -56,8 +56,6 @@ def readLangs(lang1, lang2, reverse=False):
 
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
 
-    print(pairs)
-
     if reverse:
         pairs = [list(reversed(p)) for p in pairs]
         input_lang = Lang(lang2)

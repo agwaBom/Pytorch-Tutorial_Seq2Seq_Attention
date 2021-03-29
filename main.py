@@ -15,3 +15,4 @@ input, output, pairList = preprocessing.prepareData('eng', 'fra')
 print("input : ", input)
 print('output : ', output)
 print('pairlist : ', pairList)
+

@@ -52,3 +52,4 @@ class AttnDecoderRNN(nn.Module):
         self.max_length = max_length
 
         self.embedding = nn.Embedding(self.output_size, self.hidden_size)
+        
