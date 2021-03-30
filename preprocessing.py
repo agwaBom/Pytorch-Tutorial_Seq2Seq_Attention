@@ -2,7 +2,7 @@ import unicodedata
 import re
 import torch
 from model import device
-from main import input_lang, output_lang
+from io import open
 
 """
 The full process for preparing the data is:
@@ -24,7 +24,7 @@ class Lang:
 
     def addWord(self, word):
         if word not in self.word2index:
-            self.word2index = self.n_words
+            self.word2index[word] = self.n_words
             self.word2count[word] = 1
             self.index2word[self.n_words] = word
             self.n_words += 1
@@ -111,7 +111,7 @@ def tensorFromSentence(lang, sentence):
     indexes.append(EOS_token)
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
-def tensorsFromPair(pair):
+def tensorsFromPair(input_lang, output_lang, pair):
     input_tensor = tensorFromSentence(input_lang, pair[0])
     target_tensor = tensorFromSentence(output_lang, pair[1])
     return (input_tensor, target_tensor)

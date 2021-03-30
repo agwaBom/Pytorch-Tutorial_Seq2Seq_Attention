@@ -1,7 +1,5 @@
 # It's basically the equivalent of "I guess you're not ready for this, but your kids are gonna love it". 
 from __future__ import unicode_literals, print_function, division
-
-from torch._C import device
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
@@ -9,17 +7,17 @@ import preprocessing as p
 import model as m
 import helper as h
 
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+import matplotlib.ticker as ticker
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as f
 import random
 import time
-
-input_lang, output_lang, pairList = p.prepareData('eng', 'fra')
-print("input : ", input_lang)
-print('output : ', output_lang)
-print('pairlist : ', pairList)
 
 teacher_forcing_ratio = 0.5
 
@@ -80,7 +78,7 @@ def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, lear
 
     encoder_optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = optim.SGD(decoder.parameters(), lr=learning_rate)
-    training_pairs = [p.tensorsFromPair(random.choice(pairList))
+    training_pairs = [p.tensorsFromPair(input_lang, output_lang, random.choice(pairList))
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
@@ -145,16 +143,56 @@ def evaluate(encoder, decoder, sentence, max_length=p.MAX_LENGTH):
 def evaluateRandomly(encoder, decoder, n=10):
     for i in range(n):
         pair = random.choice(pairList)
-        print('>', pair[0])
-        print('=', pair[1])
+        print('input:\t', pair[0])
+        print('target:\t', pair[1])
         output_words, attentions = evaluate(encoder, decoder, pair[0])
         output_sentence = ' '.join(output_words)
-        print('<', output_sentence)
+        print('output:\t', output_sentence)
         print('')
 
-def __main__():
+def showAttention(input_sentence, output_words, attentions):
+    # Set up figure with colorbar
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(attentions.numpy(), cmap='bone')
+    fig.colorbar(cax)
+
+    # Set up axes
+    ax.set_xticklabels([''] + input_sentence.split(' ') +
+                       ['<EOS>'], rotation=90)
+    ax.set_yticklabels([''] + output_words)
+
+    # Show label at every tick
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    plt.show()
+
+
+def evaluateAndShowAttention(input_sentence):
+    output_words, attentions = evaluate(
+        encoder1, attn_decoder1, input_sentence)
+    print('input =', input_sentence)
+    print('output =', ' '.join(output_words))
+    showAttention(input_sentence, output_words, attentions)
+
+
+if __name__ == '__main__':
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    input_lang, output_lang, pairList = p.prepareData('eng', 'fra', True)
     hidden_size = 256
     encoder1 = m.EncoderRNN(input_lang.n_words, hidden_size).to(device)
     attn_decoder1 = m.AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
 
     trainIters(encoder1, attn_decoder1, 75000, print_every=5000)
+
+    evaluateRandomly(encoder1, attn_decoder1)
+    output_words, attentions = evaluate(
+    encoder1, attn_decoder1, "je suis trop froid .")
+    plt.matshow(attentions.numpy())
+
+    evaluateAndShowAttention("elle a cinq ans de moins que moi .")
+    evaluateAndShowAttention("elle est trop petit .")
+    evaluateAndShowAttention("je ne crains pas de mourir .")
+    evaluateAndShowAttention("c est un jeune directeur plein de talent .")

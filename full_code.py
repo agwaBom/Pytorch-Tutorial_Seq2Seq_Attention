@@ -111,7 +111,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #    and extract it to the current directory.
 
 ######################################################################
-# Similar to the character encoding used in the character-level RNN
+# Similar to the character encoding used evaluatein the character-level RNN
 # tutorials, we will be representing each word in a language as a one-hot
 # vector, or giant vector of zeros except for a single one (at the index
 # of the word). Compared to the dozens of characters that might exist in a
